@@ -8,7 +8,7 @@ loader should return an empty dictionary.
 
 import unittest
 
-from fluent_robot.capabilities import get_capabilities
+from fluent_llm.capabilities import get_capabilities
 
 
 class TestCapabilities(unittest.TestCase):
@@ -32,13 +32,13 @@ class TestCapabilities(unittest.TestCase):
         # Temporarily rename the YAML file to simulate it missing
         import os
         import importlib
-        path = os.path.join(os.path.dirname(__file__), "..", "fluent_robot", "capabilities.yaml")
+        path = os.path.join(os.path.dirname(__file__), "..", "fluent_llm", "capabilities.yaml")
         backup_path = path + ".bak"
         os.rename(path, backup_path)
         try:
             importlib.invalidate_caches()
             # Reload the module to force re-read of missing file
-            from fluent_robot import capabilities  # type: ignore
+            from fluent_llm import capabilities  # type: ignore
             import importlib as _importlib
             _importlib.reload(capabilities)
             # Without the YAML, get_capabilities should return {}

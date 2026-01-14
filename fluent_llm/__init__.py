@@ -1,4 +1,4 @@
-"""fluent_robot package
+"""fluent_llm package
 
 This package provides a minimal framework for translating high‑level
 intermediate representation (IR) commands into Tecan Fluent control worklist
@@ -31,4 +31,7 @@ from .simulator import simulate_ir
 from .preflight import preflight_check
 from .job_manager import JobManager
 from .llm_stub import plan_from_text
-from .capabilities import get_capabilities  # New: expose capabilities loader
+from .capabilities import get_capabilities  # expose capabilities loader
+from .api import RobotAPI  # API façade for robot control
+from .policy import classify_step, is_allowed  # risk classification helpers
+from .llm_integration import generate_ir_from_text, repair_ir_job  # LLM planning utilities

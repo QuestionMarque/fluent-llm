@@ -2,8 +2,8 @@
 
 import unittest
 
-from fluent_robot.ir import IRJob, IRStep
-from fluent_robot.compiler import compile_ir, well_to_position
+from fluent_llm.ir import IRJob, IRStep
+from fluent_llm.compiler import compile_ir, well_to_position
 
 
 class TestCompiler(unittest.TestCase):

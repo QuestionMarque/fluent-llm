@@ -2,8 +2,8 @@
 
 import unittest
 
-from fluent_robot.ir import IRJob, IRStep
-from fluent_robot.simulator import simulate_ir
+from fluent_llm.ir import IRJob, IRStep
+from fluent_llm.simulator import simulate_ir
 
 
 class TestSimulator(unittest.TestCase):

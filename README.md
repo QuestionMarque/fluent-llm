@@ -15,15 +15,21 @@
 | `fluent_llm/job_manager.py` | Orchestrates job submission, validation, compilation and simulation.  Meant to be extended to talk to a real robot. |
 | `fluent_llm/state.py` | Error and recovery action definitions used by the validator and job manager. |
 | `fluent_llm/llm_stub.py` | A very basic parser that interprets transfer, wash and decontamination requests from free text into IR steps. |
+| `fluent_llm/api.py` | A façade that exposes high‑level methods for submitting jobs, querying status, controlling execution and listing capabilities.  Intended as a starting point for a REST or gRPC interface. |
+| `fluent_llm/policy.py` | Risk classification functions used to determine whether operations are allowed, require confirmation or should be blocked.  Extend this module with user roles and safety policies. |
+| `fluent_llm/llm_integration.py` | Utilities for integrating with an LLM.  Provides functions to generate an IR job from natural language and a placeholder for a repair loop. |
 | `fluent_llm/capabilities.yaml` | YAML registry enumerating supported operations (aspirate, dispense, wash, decontaminate) and global constraints such as volume limits.  This file is a placeholder; expand it using the Fluent documentation during Phase 1. |
 | `fluent_llm/capabilities.py` | Loader that reads the YAML registry and returns a Python dictionary via `get_capabilities()`.  This allows validators and compilers to look up available operations and constraints. |
 | **tests/** | Unit tests covering the compiler, preflight validator, simulator and LLM stub.  Run them with `python3 -m unittest discover -v`. |
+| `tests/test_api.py` | Tests for the `RobotAPI` façade, ensuring job submission, status queries and capability listings work as expected. |
+| `tests/test_policy.py` | Tests for risk classification functions in the policy module. |
+| `tests/test_llm_integration.py` | Tests for the LLM integration utilities, checking IR generation and validation behaviour. |
 | `tests/test_capabilities.py` | Tests for the capability loader ensuring the registry loads correctly and that missing files return an empty dictionary. |
 | **main.py** | Example script demonstrating the end‑to‑end flow: parse a natural‑language description, generate an IR job, validate it, compile it into a worklist, and simulate the result. |
 | **project_phases.md** | A 2–3 page document outlining the project phases and explaining the design philosophy with citations to Fluent documentation. |
 | **code_architecture.png** | Block diagram illustrating how the major components interact.  Used in the report. |
 | **project_phases.docx** | Word version of the project report, generated from `project_phases.md`. |
-| **fluent_robot_with_tests.zip** | Zipped archive containing the package, tests and example script for easy download. |
+| **fluent_llm_with_tests.zip** | Zipped archive containing the package, tests and example script for easy download. |
 
 ## Getting started
 

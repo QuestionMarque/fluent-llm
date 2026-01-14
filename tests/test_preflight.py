@@ -2,9 +2,9 @@
 
 import unittest
 
-from fluent_robot.ir import IRJob, IRStep
-from fluent_robot.preflight import preflight_check
-from fluent_robot.state import ErrorType
+from fluent_llm.ir import IRJob, IRStep
+from fluent_llm.preflight import preflight_check
+from fluent_llm.state import ErrorType
 
 
 class TestPreflight(unittest.TestCase):

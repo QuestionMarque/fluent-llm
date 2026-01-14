@@ -1,0 +1,47 @@
+# Ignore compiled Python files and caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore C extensions
+*.so
+
+# Distribution / build artifacts
+build/
+dist/
+*.egg-info/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Ignore Word documents
+*.docx
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Node modules
+node_modules/
+
+# Editor configuration
+.idea/
+.vscode/
+
+# Coverage reports
+.coverage
+coverage.xml
+
+# Test cache
+.pytest_cache/

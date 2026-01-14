@@ -2,7 +2,7 @@
 
 import unittest
 
-from fluent_robot.llm_stub import plan_from_text
+from fluent_llm.llm_stub import plan_from_text
 
 
 class TestLLMStub(unittest.TestCase):
