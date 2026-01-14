@@ -14,7 +14,7 @@ Run this script directly to see a demonstration.  In a real system,
 natural language input would be provided by users or other applications.
 """
 
-from fluent_robot import plan_from_text, JobManager
+from fluent_llm import plan_from_text, JobManager
 
 
 def main():
