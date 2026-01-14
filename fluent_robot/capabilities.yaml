@@ -1,0 +1,30 @@
+capabilities:
+  aspirate:
+    description: Aspirate liquid from a source labware well.
+    parameters:
+      - RackLabel
+      - Position
+      - Volume
+      - LiquidClass
+  dispense:
+    description: Dispense liquid into a destination labware well.
+    parameters:
+      - RackLabel
+      - Position
+      - Volume
+      - LiquidClass
+  wash:
+    description: Wash or replace tips using a wash scheme.
+    parameters:
+      - scheme
+    schemes:
+      - 1
+      - 2
+      - 3
+  decontaminate:
+    description: Decontaminate tips (fixed tips only).
+    parameters: []
+constraints:
+  volume:
+    min: 0.1
+    max: 1000

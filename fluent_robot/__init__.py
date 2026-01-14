@@ -31,3 +31,4 @@ from .simulator import simulate_ir
 from .preflight import preflight_check
 from .job_manager import JobManager
 from .llm_stub import plan_from_text
+from .capabilities import get_capabilities  # New: expose capabilities loader
