@@ -78,7 +78,7 @@ Phase 3 introduces the AI planner and safety policies.  Although your task focu
 
 The Python package mirrors the phased architecture.  The diagram below illustrates how the major sub‑systems interact:
 
-![Code Architecture]({{file:file-K6XFceuW5corfZmPTsC5r7}})
+![Library Building Blocks](code_architecture.png)
 
 * **LLM Planner (stub)** – Parses natural language into an IR job (Phase 3).  In this project we include only a stub for testing.
 * **IR (Data Models)** – Defines the job and step schemas used throughout the system.
@@ -129,8 +129,17 @@ capability registry).
 
 | Sub‑task | Explanation | Example / Pseudocode |
 | --- | --- | --- |
-| **Design REST/gRPC endpoints** | Define the operations your API should expose: job submission (`POST /jobs`), job status queries (`GET /jobs/{id}`), control commands (`POST /jobs/{id}/pause|resume|abort`), robot state (`GET /robot/state`) and capability listing (`GET /capabilities`).  Each endpoint should have clear inputs, outputs and idempotency guarantees. | Pseudocode using FastAPI:<br/>```python
+| **Design REST/gRPC endpoints** | Define the operations your API should expose: job submission (`POST /jobs`), job status queries (`GET /jobs/{id}`), control commands (`POST /jobs/{id}/pause|resume|abort`), robot state (`GET /robot/state`) and capability listing (`GET /capabilities`).  Each endpoint should have clear inputs, outputs and idempotency guarantees. | Pseudocode using FastAPI: see below. |
+| **Build a job queue and lifecycle manager** | Your API should back onto a queue that can hold multiple pending jobs and execute them sequentially or concurrently. Track the status of each job (pending, running, paused, completed, aborted). Provide a method to retrieve this status. This manager sits beneath the API and is already implemented in `job_manager.py` but must be extended to expose status and pause/resume/abort methods. | Example logic: see below. |
+| **Expose robot state and capabilities** | Provide an endpoint that returns the robot’s current state: deck layout, attached tips, queued job count and error conditions.  Also expose the `capabilities.yaml` registry via the API so that clients can discover supported commands and constraints. | In our code, `RobotAPI.get_robot_state()` returns a dictionary with `deck_state`, `queued_jobs` and `job_status`.  `RobotAPI.list_capabilities()` loads and returns the YAML registry. |
+| **Handle errors and idempotency** | The API must handle invalid inputs gracefully (e.g. unknown job IDs, malformed IR jobs).  Use appropriate HTTP status codes (400 for bad request, 404 for not found) and ensure that re‑submitting the same job does not create duplicates.  Incorporate idempotency keys into your API design. | On repeated `POST /jobs` with the same client‑generated ID, return the existing job ID rather than creating a new one.  Return `404` if `GET /jobs/{id}` is called for an unknown job. |
+
+Example FastAPI endpoints for the control API:
+
+```python
 from fastapi import FastAPI
+from fluent_llm.api import RobotAPI  # adjust import to your package structure
+
 app = FastAPI()
 api = RobotAPI(job_manager)
 
@@ -147,8 +156,11 @@ def get_status(job_id: str):
 def pause(job_id: str):
     api.pause_job(job_id)
     return {"status": "paused"}
-``` |
-| **Build a job queue and lifecycle manager** | Your API should back onto a queue that can hold multiple pending jobs and execute them sequentially or concurrently.  Track the status of each job (pending, running, paused, completed, aborted).  Provide a method to retrieve this status.  This manager sits beneath the API and is already implemented in `job_manager.py` but must be extended to expose status and pause/resume/abort methods. | Example logic:<br/>```python
+```
+
+Example logic for building a job queue and lifecycle manager:
+
+```python
 class JobManager:
     def submit(self, job):
         self.queue.append(job)
@@ -160,9 +172,7 @@ class JobManager:
         self.job_status[job.job_id] = "completed"
     def status(self, job_id):
         return self.job_status.get(job_id)
-``` |
-| **Expose robot state and capabilities** | Provide an endpoint that returns the robot’s current state: deck layout, attached tips, queued job count and error conditions.  Also expose the `capabilities.yaml` registry via the API so that clients can discover supported commands and constraints. | In our code, `RobotAPI.get_robot_state()` returns a dictionary with `deck_state`, `queued_jobs` and `job_status`.  `RobotAPI.list_capabilities()` loads and returns the YAML registry. |
-| **Handle errors and idempotency** | The API must handle invalid inputs gracefully (e.g. unknown job IDs, malformed IR jobs).  Use appropriate HTTP status codes (400 for bad request, 404 for not found) and ensure that re‑submitting the same job does not create duplicates.  Incorporate idempotency keys into your API design. | On repeated `POST /jobs` with the same client‑generated ID, return the existing job ID rather than creating a new one.  Return `404` if `GET /jobs/{id}` is called for an unknown job. |
+```
 
 **Deliverables for Phase 4**
 
@@ -182,30 +192,48 @@ this concept to all operations.
 
 | Sub‑task | Explanation | Example / Pseudocode |
 | --- | --- | --- |
-| **Expand preflight validation** | Incorporate detailed labware definitions (well counts, volume capacities, allowed tip types), advanced command parameters (flush, break, set DiTi type) and dynamic checks (available tips, reagent volumes).  Use the capability registry to look up valid operations and enforce parameter ranges. | Pseudocode:<br/>```python
-def preflight_check(job, deck_state):
-    for step in job.steps:
-        if step.op not in capabilities["capabilities"]:
-            errors.append((step.id, ErrorType.UNKNOWN_OPERATION, "Unsupported op"))
-        # check labware present
-        ...
-        # check volume <= capabilities["constraints"]["volume"]["max"]
-        ...
-``` |
-| **Implement risk classification** | Create a mapping from operations (and potentially their arguments) to risk levels: `allow`, `confirm`, or `block`.  For example, decontamination might be classified as `confirm` because it uses strong chemicals; high‑volume transfers could be `confirm` above a threshold; unknown commands are `block`. | Example in `policy.py`:<br/>```python
-RISK_POLICY = {"transfer": "allow", "wash": "allow", "decontaminate": "confirm"}
-def classify_step(step: IRStep):
-    return RISK_POLICY.get(step.op, "block")
-``` |
-| **Enforce permissions** | Introduce user roles (e.g. operator, supervisor, admin) and link them to risk levels.  Only supervisors can confirm `confirm` operations; all users can run `allow` operations; nobody can execute `block` operations.  Integrate this check into the API and job manager. | Pseudocode:<br/>```python
-def authorize(step, user_role):
-    level = classify_step(step)
-    if level == "allow": return True
-    if level == "confirm" and user_role == "supervisor": return True
-    return False
-``` |
+| **Expand preflight validation** | Incorporate detailed labware definitions (well counts, volume capacities, allowed tip types), advanced command parameters (flush, break, set DiTi type) and dynamic checks (available tips, reagent volumes).  Use the capability registry to look up valid operations and enforce parameter ranges. | Pseudocode: see below. |
+| **Implement risk classification** | Create a mapping from operations (and potentially their arguments) to risk levels: `allow`, `confirm`, or `block`.  For example, decontamination might be classified as `confirm` because it uses strong chemicals; high‑volume transfers could be `confirm` above a threshold; unknown commands are `block`. | Example in `policy.py`: see below. |
+| **Enforce permissions** | Introduce user roles (e.g. operator, supervisor, admin) and link them to risk levels.  Only supervisors can confirm `confirm` operations; all users can run `allow` operations; nobody can execute `block` operations.  Integrate this check into the API and job manager. | Pseudocode: see below. |
 | **Build confirmation workflows** | For operations classified as `confirm`, the system should pause execution and prompt the operator.  Store the confirmation status and resume the job once confirmed.  This requires persistence (e.g. database) and UI integration. | When the job manager encounters a `confirm` step, set the job status to `waiting_confirmation` and return a message through the API.  After confirmation, resume execution. |
 | **Integrate environment simulation and checks** | Before executing a job, simulate it against real inventory (tip racks, reagent volumes) to ensure resources are sufficient.  This goes beyond the static dry‑run in Phase 2.  Fail early if resources are depleted. | Use or extend the simulator to track tip consumption and reagent depletion.  If a job requires more tips than available, return an error before starting. |
+
+Pseudocode examples for Phase 5:
+
+Pseudocode for preflight validation:
+
+```python
+def preflight_check(job, deck_state):
+    errors = []
+    for step in job.steps:
+        # Unknown operation
+        if step.op not in capabilities["capabilities"]:
+            errors.append((step.id, ErrorType.UNKNOWN_OPERATION, "Unsupported op"))
+        # TODO: check labware presence, tip availability and volume ranges here
+    return errors
+```
+
+Example risk classification:
+
+```python
+RISK_POLICY = {"transfer": "allow", "wash": "allow", "decontaminate": "confirm"}
+
+def classify_step(step: IRStep) -> str:
+    # default to 'block' if the operation is not in the policy
+    return RISK_POLICY.get(step.op, "block")
+```
+
+Pseudocode for enforce permissions:
+
+```python
+def authorize(step: IRStep, user_role: str) -> bool:
+    level = classify_step(step)
+    if level == "allow":
+        return True
+    if level == "confirm" and user_role == "supervisor":
+        return True
+    return False
+```
 
 **Deliverables for Phase 5**
 
@@ -223,27 +251,43 @@ domain knowledge.
 
 | Sub‑task | Explanation | Example / Pseudocode |
 | --- | --- | --- |
-| **Define prompt templates and tool interfaces** | Craft prompts that instruct the LLM to output JSON matching the IR schema.  Provide tool definitions for listing capabilities, validating plans and submitting jobs so that the model can call them appropriately.  Include example plans in the prompt. | Example prompt fragment:<br/>```
+| **Define prompt templates and tool interfaces** | Craft prompts that instruct the LLM to output JSON matching the IR schema.  Provide tool definitions for listing capabilities, validating plans and submitting jobs so that the model can call them appropriately.  Include example plans in the prompt. | Example prompt fragment: see below. |
+| **Implement a structured output parser** | Parse the LLM's JSON output into an `IRJob`.  Validate it against the IR schema and the capability registry.  Reject plans that are not valid JSON or that contain unknown fields. | Pseudocode: see below. |
+| **Add a repair loop** | When validation fails, send a structured error message back to the LLM and request a corrected plan.  Limit the number of retries to avoid infinite loops. | Pseudocode: see below. |
+| **Integrate RAG (retrieval‑augmented generation)** | Provide the LLM with additional context such as labware definitions, worklist syntax, SOPs and examples by retrieving relevant documents and injecting them into the prompt.  This reduces hallucinations and improves correctness. | Use a document store (e.g. vector database) to retrieve passages from the Fluent manual about record parameters and volumes.  Insert them into the context section of the prompt before calling the LLM. |
+| **Fallback strategies** | Define what happens if the LLM cannot produce a valid plan after multiple attempts: either ask the user for clarification, default to a safe subset of operations, or refuse the job. | If the repair loop exceeds 3 attempts, return a message to the user asking for a more precise description or suggesting manual worklist upload. |
+
+Example prompt and pseudocode for Phase 6:
+
+Example prompt fragment for the LLM:
+
+```
 You are controlling a Tecan Fluent robot.  Output JSON matching this schema:
 {"version": str, "job_id": str, "steps": [ ... ], "constraints": {...}}
 Only use operations from this list: transfer, wash, decontaminate.
-``` |
-| **Implement a structured output parser** | Parse the LLM's JSON output into an `IRJob`.  Validate it against the IR schema and the capability registry.  Reject plans that are not valid JSON or that contain unknown fields. | Pseudocode:<br/>```python
-def parse_llm_response(json_str):
+```
+
+Pseudocode for a structured output parser:
+
+```python
+def parse_llm_response(json_str: str) -> IRJob:
     data = json.loads(json_str)
     job = IRJob(**data)
     validate(job)  # check schema
     return job
-``` |
-| **Add a repair loop** | When validation fails, send a structured error message back to the LLM and request a corrected plan.  Limit the number of retries to avoid infinite loops. | Pseudocode in `llm_integration.py`:<br/>```python
+```
+
+Pseudocode for a repair loop:
+
+```python
 for attempt in range(3):
     job = call_llm(prompt)
     errors = preflight_check(job, deck_state)
-    if not errors: break
+    if not errors:
+        break
     prompt += f" The plan failed due to {errors}; please correct it."
-``` |
-| **Integrate RAG (retrieval‑augmented generation)** | Provide the LLM with additional context such as labware definitions, worklist syntax, SOPs and examples by retrieving relevant documents and injecting them into the prompt.  This reduces hallucinations and improves correctness. | Use a document store (e.g. vector database) to retrieve passages from the Fluent manual about record parameters and volumes.  Insert them into the context section of the prompt before calling the LLM. |
-| **Fallback strategies** | Define what happens if the LLM cannot produce a valid plan after multiple attempts: either ask the user for clarification, default to a safe subset of operations, or refuse the job. | If the repair loop exceeds 3 attempts, return a message to the user asking for a more precise description or suggesting manual worklist upload. |
+```
+
 
 **Deliverables for Phase 6**
 
