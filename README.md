@@ -28,8 +28,6 @@
 | **main.py** | Example script demonstrating the end‑to‑end flow: parse a natural‑language description, generate an IR job, validate it, compile it into a worklist, and simulate the result. |
 | **project_phases.md** | A 2–3 page document outlining the project phases and explaining the design philosophy with citations to Fluent documentation. |
 | **code_architecture.png** | Block diagram illustrating how the major components interact.  Used in the report. |
-| **project_phases.docx** | Word version of the project report, generated from `project_phases.md`. |
-| **fluent_llm_with_tests.zip** | Zipped archive containing the package, tests and example script for easy download. |
 
 ## Getting started
 

@@ -30,8 +30,6 @@ job = IRJob(
 )
 ```
 
-> **Note:** In the accompanying code base the IR dataclasses live in the `fluent_llm/ir.py` module rather than `fluent_robot/ir.py`.  The naming here reflects the general concept rather than the final package name.
-
 3. **Establish an error taxonomy.**  Identify error conditions such as labware not found, volume out of range, unknown operations, etc.  The preflight validator uses these to detect problems before execution.
 
 ### Data Required from Fluent Documentation
@@ -56,13 +54,13 @@ Once the contracts are defined, Phase 2 builds a **deterministic execution laye
 
 2. **Preflight validator:**  Before compilation, `preflight_check(job, deck_state)` verifies that referenced labware exists, that volumes are within bounds, and that the operations are known.  It returns a list of errors; the job manager rejects jobs that fail.  In a future iteration the validator will perform context checks similar to FluentControl (e.g. skip vs. warn vs. error for missing labware).
 
-3. **Simulator:**  The `fluent_llm/simulator.py` module provides a minimal dry‑run.  It tracks volumes in 96‑well plates and updates them according to transfer operations.  Wash and decontamination are logged but do not change state.  Real physical limits (e.g. 250 µL per well) and mixing behaviour are not modelled; consult the documentation and libraries like `robotools` to extend the simulator.
+3. **Simulator:**  The `fluent_llm/simulator.py` module provides a minimal dry‑run.  It tracks volumes in 96‑well plates and updates them according to transfer operations.  Wash and decontamination are logged but do not change state.  Real physical limits (e.g. 250 µL per well) and mixing behaviour are not modelled; consult the documentation and libraries like `robotools` [RobotTools Documentation](https://robotools.readthedocs.io/en/latest/robotools_fluenttools.html#robotools.fluenttools.worklist.FluentWorklist) to extend the simulator.
 
 4. **Job manager:**  `fluent_llm/job_manager.py` orchestrates the process.  It holds a queue of IR jobs, runs preflight checks, compiles the worklists, simulates them and would, in a production system, dispatch them to the robot.  Recovery actions for different error types (abort, skip, retry) are configurable.
 
 ### Data Required from Fluent Documentation
 
-* **Advanced command parameters** – `W` (wash), `WD` (decontaminate), `F` (flush), `B` (break), `S` (set DiTi type) and `R` (reagent distribution) each have specific parameter sets and side effects.  For example, `WD` performs a decontamination wash for fixed tips only【246479156155221†L123-L125】.  The manual should specify the allowed schemes (W1, W2, etc.), the meaning of each parameter and when commands can be used.
+* **Advanced command parameters** – `W` (wash), `WD` (decontaminate), `F` (flush), `B` (break), `S` (set DiTi type) and `R` (reagent distribution) each have specific parameter sets and side effects.  For example, `WD` performs a decontamination wash for fixed tips only.  The manual should specify the allowed schemes (W1, W2, etc.), the meaning of each parameter and when commands can be used.
 * **Liquid class precedence** – In advanced worklists the liquid class defined in the file overrides the script’s liquid class.  The compiler must honour this rule.
 * **Tip handling rules** – How to handle multiple tips, tip masks, dynamic tip handling and mixing commands.  Currently the compiler sets unspecified fields blank; you need to fill them according to the manual.
 
