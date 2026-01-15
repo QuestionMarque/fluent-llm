@@ -10,6 +10,7 @@ and enforce all safety policies defined in phase 3.
 
 from typing import Dict, List, Tuple
 from .ir import IRJob, IRStep
+from .capabilities import get_liquid_class_precedence
 from .state import ErrorType
 
 
@@ -35,6 +36,13 @@ def preflight_check(job: IRJob, deck_state: Dict[str, any], max_volume_uL: float
     """
 
     errors: List[Tuple[str, ErrorType, str]] = []
+    # Load liquid class precedence rules.  In the current prototype these
+    # rules are not actively enforced, but the call ensures that
+    # precedence configuration can be consulted in future checks.  For
+    # example, preflight validation could compare script‑defined liquid
+    # classes with worklist‑defined ones and warn if precedence would
+    # override them.  See liquid_class_precedence.yaml for details.
+    _precedence = get_liquid_class_precedence()
     for step in job.steps:
         # Unknown operation check
         if step.op not in {"transfer", "wash", "decontaminate"}:

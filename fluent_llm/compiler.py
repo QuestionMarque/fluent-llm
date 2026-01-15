@@ -17,6 +17,7 @@ implement them correctly.
 
 from typing import List
 from .ir import IRJob, IRStep
+from .capabilities import get_liquid_class_precedence
 
 
 def well_to_position(well: str) -> int:
@@ -51,6 +52,13 @@ def compile_ir(job: IRJob) -> List[str]:
             arguments are missing.
     """
     worklist_lines: List[str] = []
+    # Load liquid class precedence once per job.  This mapping tells us
+    # whether to prefer the liquid class defined in the script or the
+    # worklist when compiling advanced operations.  It falls back to
+    # sensible defaults if the configuration is absent.
+    precedence = get_liquid_class_precedence()
+    prefer_worklist_class = precedence.get("advanced_worklist", "worklist") == "worklist"
+
     for step in job.steps:
         if step.op == "transfer":
             src_labware = step.args.get("source_labware")
@@ -58,7 +66,15 @@ def compile_ir(job: IRJob) -> List[str]:
             dest_labware = step.args.get("dest_labware")
             dest_well = step.args.get("dest_well")
             vol = step.args.get("volume_uL")
+            # Resolve the liquid class based on precedence.  IR steps may
+            # optionally specify a ``worklist_liquid_class`` argument to
+            # indicate the class that should be written into the GWL file.
+            # If advanced worklists are configured to take precedence,
+            # prefer the worklist‑defined class when present.  Otherwise
+            # default to the script‑defined class or "Water".
             liquid_class = step.args.get("liquid_class", "Water")
+            if prefer_worklist_class and step.args.get("worklist_liquid_class"):
+                liquid_class = step.args.get("worklist_liquid_class")
             if None in (src_labware, src_well, dest_labware, dest_well, vol):
                 raise ValueError(f"Missing argument for transfer in step {step.id}")
             src_pos = well_to_position(src_well)
