@@ -24,6 +24,8 @@ capabilities:
   decontaminate:
     description: Decontaminate tips (fixed tips only).
     parameters: []
+# TODO: Add the advanced commands and their parameters (e.g., flush (F), break (B), set_diti_type (S), comment (C))
+# TODO: Specify tip‑handling rules in your registry (e.g., differentiate fixed vs disposable tips and map W, WD, F commands accordingly)
 constraints:
   volume:
     min: 0.1

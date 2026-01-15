@@ -1,0 +1,14 @@
+# Liquid class precedence configuration
+#
+# This file defines precedence rules for selecting a liquid class when compiling
+# an advanced worklist.  In simple scripts the liquid class may be defined in
+# the controlling code (script), but for advanced worklists the liquid class
+# specified within the worklist should take precedence.  Adjust these
+# settings to suit your robot and process requirements.
+
+liquid_class_precedence:
+  # Use the liquid class defined in the controlling script by default
+  default: script
+  # When generating or running an advanced worklist, prefer the class
+  # specified within the worklist itself over the script-defined class
+  advanced_worklist: worklist

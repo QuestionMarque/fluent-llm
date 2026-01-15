@@ -66,7 +66,7 @@ Once the contracts are defined, Phase 2 builds a **deterministic execution laye
 
 ## Phase 3 – Safety & AI Integration (preview)
 
-Phase 3 introduces the AI planner and safety policies.  Although your task focuses on phases 1–2, it is important to understand how they fit into the larger system:
+Phase 3 introduces the AI planner and safety policies:
 
 * **LLM planner:**  A large language model converts user instructions into IR.  Our `fluent_llm/llm_stub.py` file contains a rudimentary parser that extracts transfer commands, wash and decontamination requests from free text.  In production this will be replaced by an LLM that emits JSON IR objects and handles validation errors via a repair loop.
 * **Safety policies:**  Preflight checks will incorporate risk classification (allow / confirm / block) and enforce permissioning.  For example, decontamination may require operator confirmation.
