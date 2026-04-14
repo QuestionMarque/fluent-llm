@@ -19,15 +19,14 @@ devices:
     channels: [1, 8]
     liquid_handling_mode: air_displacement
     capabilities:
-      - aspirate
-      - dispense
-      - mix
-      - load_worklist
-      - execute_worklist
-      - liquid_level_detection_capacitive
-      - liquid_tracking
-      - air_gap
-      - blowout
+      - get_tips
+      - drop_tips_to_location
+      - aspirate_volume
+      - dispense_volume
+      - mix_volume
+      - empty_tips
+      - reagent_distribution
+      - sample_transfer
     tip_modes:
       - disposable
     constraints:
@@ -297,6 +296,22 @@ methods:
       - reagent_distribution
       - mix
       - incubate
+  
+  - name: liquid_handling
+    supports:
+      - get_tips
+      - aspirate_volume
+      - drop_tips_to_location
+      - dispense_volume
+      - mix_volume
+      - empty_tips
+      - sample_transfer
+    requires:
+      - FCA
+  
+  - name : RGA_movements
+    supports:
+      - transfer_labware
 
 compatibility:
 

@@ -59,3 +59,8 @@ config.local.yaml
 generated_code/
 llm_outputs/
 tmp_workflows/
+
+# other
+uv.lock
+pyproject.toml
+.python-version
